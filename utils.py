@@ -1,10 +1,18 @@
 # Sam Greydanus, Misko Dzama, Jason Yosinski
 # 2019 | Google AI Residency Project "Hamiltonian Neural Networks"
 
+# import numpy as np
+# import os, torch, pickle, zipfile
+# import imageio, shutil
+# import scipy, scipy.misc, scipy.integrate
+# from PIL import Image
+# solve_ivp = scipy.integrate.solve_ivp
+
 import numpy as np
 import os, torch, pickle, zipfile
 import imageio, shutil
 import scipy, scipy.misc, scipy.integrate
+from PIL import Image
 solve_ivp = scipy.integrate.solve_ivp
 
 
@@ -85,28 +93,60 @@ def choose_nonlinearity(name):
   return nl
 
 
-def make_gif(frames, save_dir, name='pendulum', duration=1e-1, pixels=None, divider=0):
-    '''Given a three dimensional array [frames, height, width], make
-    a gif and save it.'''
-    temp_dir = './_temp'
-    os.mkdir(temp_dir) if not os.path.exists(temp_dir) else None
-    for i in range(len(frames)):
-        im = (frames[i].clip(-.5,.5) + .5)*255
-        im[divider,:] = 0
-        im[divider + 1,:] = 255
+# def make_gif(frames, save_dir, name='pendulum', duration=1e-1, pixels=None, divider=0):
+#     '''Given a three dimensional array [frames, height, width], make
+#     a gif and save it.'''
+#     temp_dir = './_temp'
+#     os.mkdir(temp_dir) if not os.path.exists(temp_dir) else None
+#     for i in range(len(frames)):
+#         im = (frames[i].clip(-.5,.5) + .5)*255
+#         im[divider,:] = 0
+#         im[divider + 1,:] = 255
+#         if pixels is not None:
+#           im = scipy.misc.imresize(im, pixels)
+#         scipy.misc.imsave(temp_dir + '/f_{:04d}.png'.format(i), im)
+
+#     images = []
+#     for file_name in sorted(os.listdir(temp_dir)):
+#         if file_name.endswith('.png'):
+#             file_path = os.path.join(temp_dir, file_name)
+#             images.append(imageio.imread(file_path))
+#     save_path = '{}/{}.gif'.format(save_dir, name)
+#     png_save_path = '{}.png'.format(save_path)
+#     imageio.mimsave(save_path, images, duration=duration)
+#     os.rename(save_path, png_save_path)
+
+#     shutil.rmtree(temp_dir) # remove all the images
+#     return png_save_path
+
+def make_gif(frames, save_dir, name='pendulum', duration=1e-1, pixels=[120,120], divider=10):
+    temp_dir = '{}/temp_{}'.format(save_dir, name)
+    if not os.path.exists(temp_dir):
+        os.makedirs(temp_dir)
+
+    for i, frame in enumerate(frames):
+        im = np.uint8(255 * frame)
+        if divider is not None:
+            im = np.pad(im, ((divider, 0), (0, 0)), mode='constant', constant_values=255)
+            im[divider + 1,:] = 255
         if pixels is not None:
-          im = scipy.misc.imresize(im, pixels)
-        scipy.misc.imsave(temp_dir + '/f_{:04d}.png'.format(i), im)
+            im = Image.fromarray(im)
+            im = im.resize(pixels, Image.Resampling.LANCZOS)
+            im = np.array(im)
+        Image.fromarray(im).save(temp_dir + '/f_{:04d}.png'.format(i))
 
     images = []
-    for file_name in sorted(os.listdir(temp_dir)):
-        if file_name.endswith('.png'):
-            file_path = os.path.join(temp_dir, file_name)
-            images.append(imageio.imread(file_path))
-    save_path = '{}/{}.gif'.format(save_dir, name)
-    png_save_path = '{}.png'.format(save_path)
-    imageio.mimsave(save_path, images, duration=duration)
-    os.rename(save_path, png_save_path)
+    for i in range(len(frames)):
+        filename = temp_dir + '/f_{:04d}.png'.format(i)
+        images.append(Image.open(filename))
 
-    shutil.rmtree(temp_dir) # remove all the images
-    return png_save_path
+    gifname = '{}/{}.gif'.format(save_dir, name)
+    images[0].save(gifname, save_all=True, append_images=images[1:], duration=duration*1000, loop=0)
+
+    # Clean up temporary images
+    for i in range(len(frames)):
+        filename = temp_dir + '/f_{:04d}.png'.format(i)
+        os.remove(filename)
+    os.rmdir(temp_dir)
+
+    return gifname
