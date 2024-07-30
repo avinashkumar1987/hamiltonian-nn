@@ -58,7 +58,7 @@ from utils import to_pickle, from_pickle
 def preproc(X, side):
     '''Preprocess an image for input into the model'''
     from PIL import Image
-    img = Image.fromarray(X)
+    img = Image.fromarray(X).convert('L')
     img = img.resize((int(side), side), Image.Resampling.LANCZOS)
     return np.array(img).flatten() / 255.0  # Flatten the image to a 1D array
 
