@@ -187,6 +187,28 @@ class HNN(torch.nn.Module):
                     M[i,j] *= -1
         return M
 
+# class PixelHNN(nn.Module):
+#     def __init__(self, latent_dim, hidden_dim, autoencoder, nonlinearity='Tanh', baseline=False):
+#         super(PixelHNN, self).__init__()
+#         self.autoencoder = autoencoder
+#         self.nonlinearity = getattr(nn, nonlinearity)()
+#         self.baseline = baseline
+
+#         self.model = nn.Sequential(
+#             nn.Linear(latent_dim, hidden_dim),
+#             self.nonlinearity,
+#             nn.Linear(hidden_dim, latent_dim)
+#         )
+
+#     def encode(self, x):
+#         return self.autoencoder.encode(x)
+
+#     def decode(self, z):
+#         return self.autoencoder.decode(z)
+
+#     def time_derivative(self, z):
+#         return self.model(z)
+
 class PixelHNN(nn.Module):
     def __init__(self, latent_dim, hidden_dim, autoencoder, nonlinearity='Tanh', baseline=False):
         super(PixelHNN, self).__init__()
@@ -194,11 +216,7 @@ class PixelHNN(nn.Module):
         self.nonlinearity = getattr(nn, nonlinearity)()
         self.baseline = baseline
 
-        self.model = nn.Sequential(
-            nn.Linear(latent_dim, hidden_dim),
-            self.nonlinearity,
-            nn.Linear(hidden_dim, latent_dim)
-        )
+        self.hnn = HNN(latent_dim, MLP(latent_dim, hidden_dim, latent_dim, nonlinearity=nonlinearity), baseline=baseline)
 
     def encode(self, x):
         return self.autoencoder.encode(x)
@@ -207,4 +225,9 @@ class PixelHNN(nn.Module):
         return self.autoencoder.decode(z)
 
     def time_derivative(self, z):
-        return self.model(z)
+        return self.hnn.time_derivative(z)
+
+    def forward(self, x):
+        z = self.encode(x)
+        z_next = z + self.time_derivative(z)
+        return self.decode(z_next)
