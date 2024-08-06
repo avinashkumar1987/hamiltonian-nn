@@ -115,7 +115,7 @@ def get_theta(obs):
     return theta
 
 
-def sample_gym(seed=0, timesteps=103, trials=200, side=28, min_angle=0., max_angle=np.pi/6, 
+def sample_gym(seed=0, timesteps=103, trials=200, side=28*4, min_angle=0., max_angle=np.pi/6, 
               verbose=False, env_name='Pendulum-v1'):
 
     gym_settings = locals()

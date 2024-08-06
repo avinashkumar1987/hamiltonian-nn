@@ -243,7 +243,7 @@ from utils import L2_loss
 
 def get_args():
     parser = argparse.ArgumentParser(description=None)
-    parser.add_argument('--input_dim', default=28*28*2, type=int, help='dimensionality of input tensor')  # Adjusted input_dim to 28*28*2
+    parser.add_argument('--input_dim', default=4*4*28*28*2, type=int, help='dimensionality of input tensor')  # Adjusted input_dim to 28*28*2
     parser.add_argument('--hidden_dim', default=200, type=int, help='hidden dimension of mlp')
     parser.add_argument('--latent_dim', default=2, type=int, help='latent dimension of autoencoder')
     parser.add_argument('--learn_rate', default=1e-3, type=float, help='learning rate')
